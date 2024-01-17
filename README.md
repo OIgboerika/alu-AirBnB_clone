@@ -22,4 +22,4 @@ To start the command interpreter, follow these steps:
  
 4. Run the command interpreter:
    bash
-   python interpreter.py
+   console.py
