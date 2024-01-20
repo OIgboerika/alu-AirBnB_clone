@@ -9,7 +9,7 @@ The command interpreter is a crucial component of this Airbnb Clone, providing a
 How to Start the Command Interpreter
 To start the command interpreter, follow these steps:
 1. Clone the repository to your local machine:
-   bash
+   'bash'
    git clone https://github.com/yourusername/alu-AirBnB_clone.git
 
 2. Navigate to the project directory:
@@ -21,5 +21,5 @@ To start the command interpreter, follow these steps:
    pip install -r requirements.txt
  
 4. Run the command interpreter:
-   bash
+   'bash'
    console.py
