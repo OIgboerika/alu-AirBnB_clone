@@ -1,71 +1,83 @@
 #!/usr/bin/python3
-
-from uuid import uuid4 as u4
+"""This is the base model class for AirBnB"""
+from sqlalchemy.ext.declarative import declarative_base
+import uuid
+import models
 from datetime import datetime
-from models import storage
+from sqlalchemy import Column, Integer, String, DateTime
+
+
+Base = declarative_base()
 
 
 class BaseModel:
+    """This class will defines all common attributes/methods
+    for other classes
+    """
+    id = Column(String(60), unique=True, nullable=False, primary_key=True)
+    created_at = Column(DateTime, nullable=False, default=(datetime.utcnow()))
+    updated_at = Column(DateTime, nullable=False, default=(datetime.utcnow()))
 
     def __init__(self, *args, **kwargs):
-        # Here we're checking if kwargs is empty or not.
-        # Wether it is empty or not we are going to create a new instance of
-        #   the class with the id and the created_at and updated_at attributes.
-        # We can also check if it's empty by doing
-        #           if not kwargs: or if kwargs == {}: or if kwargs is None:
+        """Instantiation of base model class
+        Args:
+            args: it won't be used
+            kwargs: arguments for the constructor of the BaseModel
+        Attributes:
+            id: unique id generated
+            created_at: creation date
+            updated_at: updated date
+        """
         if kwargs:
             for key, value in kwargs.items():
-                # Here we are checking if the key is equal to the class name,
-                #   if it is we are going to skip it, because we don't want
-                #   to set the class name as an attribute
-                # Each key of the dictionary is an attribute name and each
-                #  value of the dictionary is the value of the attribute name.
-                if key == '__class__':
-                    continue
-                # We checke if the key is equal to created_at or updated_at,
-                # If it's we're going to convert the string to datetime object
-                elif key == 'created_at' or key == 'updated_at':
-                    self.__dict__[key] = datetime.strptime(
-                        value, "%Y-%m-%dT%H:%M:%S.%f")
-                # If all above conditions are false we're going to set the key
-                #   and value as an attribute.
-                else:
-                    self.__dict__[key] = value
-        else:
-            # Public instance attributes: id, created_at, updated_at
-            # These are assigned when an instance is created
-            self.id = str(u4())
-            self.created_at = datetime.now()
-            self.updated_at = datetime.now()
-            storage.new(self)
+                if key == "created_at" or key == "updated_at":
+                    value = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+                if key != "__class__":
+                    setattr(self, key, value)
+            if "id" not in kwargs:
+                self.id = str(uuid.uuid4())
+            if "created_at" not in kwargs:
+                self.created_at = datetime.now()
+            if "updated_at" not in kwargs:
+                self.updated_at = datetime.now()
+            else:
+                self.id = str(uuid.uuid4())
+                self.created_at = self.updated_at = datetime.now()
 
-    # __str__: should print: [<class name>] (<self.id>) <self.__dict__>
     def __str__(self):
-        string = "[{}] ({}) {}" .format(
-            self.__class__.__name__, self.id, self.__dict__)
-        return string
+        """returns a string
+        Return:
+            returns a string of class name, id, and dictionary
+        """
+        return "[{}] ({}) {}".format(
+            type(self).__name__, self.id, self.__dict__)
 
-    # Public instance methods: save, to_dict
-    # save: updates updated_at with the current datetime
+    def __repr__(self):
+        """return a string representaion
+        """
+        return self.__str__()
+
     def save(self):
+        """updates the public instance attribute updated_at to current
+        """
         self.updated_at = datetime.now()
-        storage.save()
+        models.storage.new(self)
+        models.storage.save()
 
-    # to_dict: returns a dictionary of keys/values of __dict__ of the instance
     def to_dict(self):
-        # This is a copy of the __dict__ attribute of the instance
-        # So that we don't modify the original dictionary
-        # The data is also different as it's converted to string & ISO format
-        new_dict = self.__dict__.copy()
-        new_dict["__class__"] = self.__class__.__name__
-        # created_at & updated_at: change from datetime object to string
-        # Here instead of creating new variables we can also use:
-        # old_created = self.created_at and old_updated = self.updated_at
+        """creates dictionary of the class  and returns
+        Return:
+            returns a dictionary of all the key values in __dict__
+        """
+        my_dict = dict(self.__dict__)
+        my_dict["__class__"] = str(type(self).__name__)
+        my_dict["created_at"] = self.created_at.isoformat()
+        my_dict["updated_at"] = self.updated_at.isoformat()
+        if '_sa_instance_state' in my_dict.keys():
+            del my_dict['_sa_instance_state']
+        return my_dict
 
-        old_created = new_dict["created_at"]
-        old_updated = new_dict["updated_at"]
-        created = old_created.isoformat()
-        updated = old_updated.isoformat()
-        new_dict["created_at"] = created
-        new_dict["updated_at"] = updated
-        return new_dict
+    def delete(self):
+        """ delete object
+        """
+        models.storage.delete(self)
